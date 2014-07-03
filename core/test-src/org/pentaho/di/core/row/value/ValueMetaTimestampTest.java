@@ -21,16 +21,6 @@
  ******************************************************************************/
 package org.pentaho.di.core.row.value;
 
-
-import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.pentaho.di.core.database.DatabaseMeta;
-import org.pentaho.di.core.exception.KettleDatabaseException;
-
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyInt;
@@ -38,17 +28,27 @@ import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
+
+import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.pentaho.di.core.database.DatabaseMeta;
+import org.pentaho.di.core.exception.KettleDatabaseException;
+
 /**
- * User: Dzmitry Stsiapanau Date: 3/24/14 Time: 1:30 PM
+ * User: Dzmitry Stsiapanau Date: 3/20/2014 Time: 11:51 AM
  */
 public class ValueMetaTimestampTest {
   @Test
   public void testSetPreparedStatementValue() throws Exception {
     ValueMetaTimestamp vm = new ValueMetaTimestamp();
     PreparedStatement ps = mock( PreparedStatement.class );
-    doAnswer( new Answer() {
-      @Override public Object answer( InvocationOnMock invocationOnMock ) throws Throwable {
-        Object ts = invocationOnMock.getArguments()[ 1 ];
+    doAnswer( new Answer<Object>() {
+      @Override
+      public Object answer( InvocationOnMock invocationOnMock ) throws Throwable {
+        Object ts = invocationOnMock.getArguments()[1];
         return ts.toString();
       }
     } ).when( ps ).setTimestamp( anyInt(), (Timestamp) anyObject() );
@@ -72,5 +72,27 @@ public class ValueMetaTimestampTest {
     assertEquals( vm.compare( earlier, earlier ), 0 );
     assertEquals( vm.compare( earlier, later ), -1 );
     assertEquals( vm.compare( later, earlier ), 1 );
+  }
+
+  @Test
+  public void testConvertStringToTimestamp() throws Exception {
+    ValueMetaTimestamp valueMetaTimestamp = new ValueMetaTimestamp();
+    assertEquals( Timestamp.valueOf( "2012-04-05 04:03:02.123456" ),
+      valueMetaTimestamp.convertStringToTimestamp( "2012/4/5 04:03:02.123456" ) );
+    assertEquals( Timestamp.valueOf( "2012-04-05 04:03:02.123" ),
+      valueMetaTimestamp.convertStringToTimestamp( "2012/4/5 04:03:02.123" ) );
+    assertEquals( Timestamp.valueOf( "2012-04-05 04:03:02.123456789" ),
+      valueMetaTimestamp.convertStringToTimestamp( "2012/4/5 04:03:02.123456789" ) );
+  }
+
+  @Test
+  public void testConvertTimestampToString() throws Exception {
+    ValueMetaTimestamp valueMetaTimestamp = new ValueMetaTimestamp();
+    assertEquals( "2012/04/05 04:03:02.123456000",
+      valueMetaTimestamp.convertTimestampToString( Timestamp.valueOf( "2012-04-05 04:03:02.123456" ) ) );
+    assertEquals( "2012/04/05 04:03:02.123000000",
+      valueMetaTimestamp.convertTimestampToString( Timestamp.valueOf( "2012-04-05 04:03:02.123" ) ) );
+    assertEquals( "2012/04/05 04:03:02.123456789",
+      valueMetaTimestamp.convertTimestampToString( Timestamp.valueOf( "2012-04-05 04:03:02.123456789" ) ) );
   }
 }
